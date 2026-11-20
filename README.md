@@ -1,7 +1,23 @@
-Amit tudni kell : 
-Maga az alkalmazás a ClientApp mappán belül az src-be található ez a frontend része.
-A backend pedig Context, Controllers, Migrations, Models mappákba találhatóak.
-A Migrations mappába benne hagytam a migrációs fájlokat, ha szeretné valaki kipróbálni terminálba : dotnet ef migrations add (fájl neve), az adatbázis frissítése dotnet ef database update.
-Én az adatbázist Azure-ön belül hoztam létre. Ezt meglehet oldana Azure Data Studio-val vagy bármilyen adatbázis kezelő alkalmazással.
-# Vedonoi_idopontfoglalo_rendszer
-# Vedonoi_idopontfoglalo_rendszer
+# Védőnői időpontfoglaló rendszer
+
+A frontend a `ClientApp/src` mappában található (Angular). A backend a `Context`, `Controllers`, `Migrations` és `Models` mappákban van (ASP.NET Core 8, Entity Framework Core).
+
+Az adatbázis SQLite, így nincs szükség külön adatbázisszerverre. A migrációs fájlok a `Migrations` mappában vannak, az adatbázis létrehozása:
+
+```bash
+dotnet ef database update
+```
+
+Új migráció készítése:
+
+```bash
+dotnet ef migrations add <MigracioNeve>
+```
+
+Indítás:
+
+```bash
+dotnet run
+```
+
+Az adatbázis (`idopontfoglalo.db`) bármilyen SQLite-kezelővel megnyitható, például a DB Browser for SQLite programmal.

@@ -54,6 +54,7 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(e => e.VedonoID)
             .OnDelete(DeleteBehavior.Cascade);
 
+
         modelBuilder.Entity<Elerhetoseg>()
             .Property(e => e.HetNapjai)
             .HasConversion<string>();
@@ -85,5 +86,14 @@ public class ApplicationDbContext : DbContext
             .WithMany(s => s.Idopontfoglalasok)
             .HasForeignKey(ifoglalas => ifoglalas.SzolgaltatasID)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Szolgaltatas>().HasData(
+            new Szolgaltatas { ID = 1, Nev = "Várandós tanácsadás" },
+            new Szolgaltatas { ID = 2, Nev = "Csecsemő védőnői tanácsadás (0-1 év)" },
+            new Szolgaltatas { ID = 3, Nev = "Gyerek tanácsadás (1-6 év)" },
+            new Szolgaltatas { ID = 4, Nev = "Védőnői fogadóóra" },
+            new Szolgaltatas { ID = 5, Nev = "Szülés felkészítő" },
+            new Szolgaltatas { ID = 6, Nev = "Méhnyakrák szűrés" }
+        );
     }
 }

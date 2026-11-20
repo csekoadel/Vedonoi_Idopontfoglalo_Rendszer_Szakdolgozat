@@ -2,7 +2,6 @@ using Context;
 using Idopontfoglalo_Rendszer.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,25 +23,22 @@ public class Startup
 
     public IConfiguration Configuration { get; }
 
-    // ConfigureServices metódus
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddScoped<EmailSender>();
         services.Configure<SmtpSettings>(Configuration.GetSection("SMTP"));
-        services.AddControllers()
-            .AddNewtonsoftJson(options =>
-                options.SerializerSettings.Converters.Add(new StringEnumConverter()));
-        // Adatbázis konfiguráció
+
         services.AddControllers()
             .AddNewtonsoftJson(options =>
             {
-                // Az önhivatkozásokat figyelmen kívül hagyja
+                options.SerializerSettings.Converters.Add(new StringEnumConverter());
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-        // CORS beállítás
+        // SQLite adatbázis
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+
         services.AddCors(options =>
         {
             options.AddPolicy("AllowSpecificOrigin", builder =>
@@ -52,24 +48,15 @@ public class Startup
                     .AllowCredentials());
         });
 
-
-        services.AddAuthorization();
-        services.AddControllersWithViews();
-
-        // Swagger konfiguráció
         services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Idopontfoglalo_Rendszer API", Version = "v1" });
-        });
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Idopontfoglalo_Rendszer API", Version = "v1" }));
 
-        // SPA statikus fájlok konfigurációja (Angular alkalmazás)
         services.AddSpaStaticFiles(configuration =>
         {
-            configuration.RootPath = "ClientApp/dist"; // Az Angular build mappa útvonala
+            configuration.RootPath = "ClientApp/dist";
         });
     }
 
-    // Configure metódus
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
@@ -84,40 +71,31 @@ public class Startup
         }
         else
         {
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Append("Content-Security-Policy",
+                    "default-src 'self'; " +
+                    "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://*.firebaseapp.com; " +
+                    "script-src 'self' https://apis.google.com https://www.gstatic.com; " +
+                    "frame-src https://*.firebaseapp.com https://accounts.google.com; " +
+                    "img-src 'self' data: https://*.googleusercontent.com; " +
+                    "style-src 'self' 'unsafe-inline';");
+                await next();
+            });
             app.UseExceptionHandler("/Error");
-            app.UseHsts(); // Ha szükséges, ezt is kikapcsolhatod ideiglenesen
         }
-
-
-        // Kikapcsoljuk a HTTPS átirányítást ideiglenesen
-        // app.UseHttpsRedirection();
 
         app.UseStaticFiles();
         app.UseSpaStaticFiles();
 
         app.UseRouting();
         app.UseCors("AllowSpecificOrigin");
-        app.UseAuthorization();
 
-        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
-
-        app.Use(async (context, next) =>
-        {
-            context.Response.Headers.Append("Content-Security-Policy",
-                "default-src 'self'; " +
-                "connect-src 'self' https://identitytoolkit.googleapis.com https://*.firebaseapp.com https://www.googleapis.com; " +
-                "style-src 'self' 'unsafe-inline'; " +
-                "script-src 'self' https://apis.google.com; " +
-                "frame-src https://*.firebaseapp.com https://accounts.google.com;"
-            );
-            await next();
-        });
-
+        app.UseEndpoints(endpoints => endpoints.MapControllers());
 
         app.UseSpa(spa =>
         {
             spa.Options.SourcePath = "ClientApp";
-
             if (env.IsDevelopment()) spa.UseAngularCliServer("start");
         });
     }
