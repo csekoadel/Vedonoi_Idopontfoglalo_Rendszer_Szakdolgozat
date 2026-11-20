@@ -52,16 +52,19 @@ export class FoglalasNegyedikComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    if (currentUser && currentUser.felhasznaloID && currentUser.id) {
-      this.userId = currentUser.felhasznaloID || currentUser.id;
-      console.log('Bejelentkezett felhasználó ID (szuloID):', this.userId);
-    } else {
-      console.error('Nincs bejelentkezett felhasználó vagy hiányzik az ID.');
-      alert('Be kell jelentkezned a foglaláshoz!');
-      this.router.navigateByUrl('/belepes');
-      return;
-    }
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const szuloIdParam = this.route.snapshot.queryParamMap.get('szuloId');
+        const szuloId = szuloIdParam ? +szuloIdParam : (currentUser?.szuloId ?? currentUser?.szuloID);
+
+        if (currentUser && (currentUser.felhasznaloID || currentUser.id) && szuloId) {
+          this.userId = szuloId;
+          console.log('Bejelentkezett szülő ID (szuloID):', this.userId);
+        } else {
+          console.error('Nincs bejelentkezett felhasználó vagy hiányzik az ID.', currentUser);
+          alert('Be kell jelentkezned a foglaláshoz!');
+          this.router.navigateByUrl('/belepes');
+          return;
+        }
 
     const state = history.state;
     if (state && state.vedonoData) {
