@@ -69,19 +69,15 @@ public class IdopontfoglalasController : ControllerBase
         {
             try
             {
-                var napKezdete = foglalas.Datum.Date;
-                var napVege = napKezdete.AddDays(1);
-
-                // 1. Adatbázisból: a védőnő aznapi, még szabad elérhetőségei
-                var napiElerhetosegek = await _context.Elerhetoseg
-                    .Where(i => i.VedonoID == foglalas.VedonoID &&
-                                i.Datum >= napKezdete && i.Datum < napVege &&
-                                i.Statusz != 1)
+                // 1. Adatbázisból: csak a védőnő szabad elérhetőségei
+                var vedonoElerhetosegei = await _context.Elerhetoseg
+                    .Where(i => i.VedonoID == foglalas.VedonoID && i.Statusz != 1)
                     .ToListAsync();
 
-                // 2. Memóriában: az időpontok átfedésének vizsgálata
-                var idopontok = napiElerhetosegek
-                    .Where(i => parsedKezdesiIdo < i.BefejezesiIdo.TimeOfDay &&
+                // 2. Memóriában: nap és időpont szerinti szűrés
+                var idopontok = vedonoElerhetosegei
+                    .Where(i => i.Datum.Date == foglalas.Datum.Date &&
+                                parsedKezdesiIdo < i.BefejezesiIdo.TimeOfDay &&
                                 parsedBefejezesiIdo > i.KezdesiIdo.TimeOfDay)
                     .ToList();
 
