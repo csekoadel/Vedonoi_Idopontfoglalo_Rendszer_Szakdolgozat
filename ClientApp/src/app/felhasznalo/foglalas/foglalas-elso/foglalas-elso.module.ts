@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
     FoglalasElsoComponent
   ],
   imports: [
-    FormsModule
+    FormsModule,
     CommonModule,
     FoglalasElsoRoutingModule,
     MatOption,
