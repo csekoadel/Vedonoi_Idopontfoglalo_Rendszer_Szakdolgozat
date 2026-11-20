@@ -42,8 +42,6 @@ public class IdopontfoglalasController : ControllerBase
     [HttpPost("foglalas")]
     public async Task<IActionResult> PostIdopontfoglalas(Idopontfoglalas foglalas)
     {
-        var szolgaltatas = new Szolgaltatas();
-
         if (foglalas.VedonoID == 0 || foglalas.SzuloID == 0)
             return BadRequest(new { error = "VedonoID vagy SzuloID hiányzik." });
 
@@ -62,26 +60,30 @@ public class IdopontfoglalasController : ControllerBase
         var felhasznalo = await _context.Felhasznalo.FirstOrDefaultAsync(f => f.ID == foglalas.SzuloID);
         if (felhasznalo == null) return NotFound(new { error = "A felhasználó nem található." });
 
-        try
-        {
-            foglalas.FoglalasIdopontja = DateTime.UtcNow;
-            foglalas.UtolsoFrissites = DateTime.UtcNow;
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = "Érvénytelen dátumformátum!" });
-        }
+        var szolgaltatas = await _context.Szolgaltatas.FindAsync(foglalas.SzolgaltatasID);
+
+        foglalas.FoglalasIdopontja = DateTime.UtcNow;
+        foglalas.UtolsoFrissites = DateTime.UtcNow;
 
         using (var transaction = await _context.Database.BeginTransactionAsync())
         {
             try
             {
-                var idopontok = await _context.Elerhetoseg
-                    .Where(i => i.Datum.Date == foglalas.Datum.Date &&
-                                parsedKezdesiIdo < i.BefejezesiIdo.TimeOfDay &&
-                                parsedBefejezesiIdo > i.KezdesiIdo.TimeOfDay &&
+                var napKezdete = foglalas.Datum.Date;
+                var napVege = napKezdete.AddDays(1);
+
+                // 1. Adatbázisból: a védőnő aznapi, még szabad elérhetőségei
+                var napiElerhetosegek = await _context.Elerhetoseg
+                    .Where(i => i.VedonoID == foglalas.VedonoID &&
+                                i.Datum >= napKezdete && i.Datum < napVege &&
                                 i.Statusz != 1)
                     .ToListAsync();
+
+                // 2. Memóriában: az időpontok átfedésének vizsgálata
+                var idopontok = napiElerhetosegek
+                    .Where(i => parsedKezdesiIdo < i.BefejezesiIdo.TimeOfDay &&
+                                parsedBefejezesiIdo > i.KezdesiIdo.TimeOfDay)
+                    .ToList();
 
                 if (idopontok.Count == 0)
                     return NotFound(new { error = "A kiválasztott időpont nem található vagy már foglalt!" });
@@ -89,9 +91,7 @@ public class IdopontfoglalasController : ControllerBase
                 foreach (var idopont in idopontok)
                 {
                     idopont.Statusz = 1;
-                    idopont.SzolgaltatasID =
-                        foglalas.SzolgaltatasID;
-                    _context.Elerhetoseg.Update(idopont);
+                    idopont.SzolgaltatasID = foglalas.SzolgaltatasID;
                 }
 
                 foglalas.FelhasznaloNev = felhasznalo.Felhasznalonev;
