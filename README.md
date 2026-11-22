@@ -9,7 +9,7 @@ Az adatbázis SQLite, így nincs szükség külön adatbázisszerverre.
 **1. Adatbázis létrehozása** (első indítás előtt kötelező):
 
 ```bash
-dotnet tool install --global dotnet-ef
+dotnet tool install --global dotnet-ef --version "8.*"
 dotnet ef database update
 ```
 
