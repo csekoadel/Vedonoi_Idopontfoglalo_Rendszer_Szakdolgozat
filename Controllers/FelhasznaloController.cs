@@ -54,22 +54,22 @@ public class FelhasznaloController : ControllerBase
                 .FirstOrDefaultAsync()
             : null;
 
-        var response = new
-        {
-            felhasznalo.ID,
-            felhasznalo.Email,
-            felhasznalo.Felhasznalonev,
-            felhasznalo.Keresztnev,
-            felhasznalo.Vezeteknev,
-            felhasznalo.Telefonszam,
-            felhasznalo.ProfilkepUrl,
-            felhasznalo.RegisztracioIdopontja,
-            felhasznalo.UtolsoFrissites,
-            SzuloID = szuloId,
-            VedonoID = vedonoData?.ID,
-            VedonoAdatok = vedonoData
-        };
-
+                       var response = new
+                       {
+                           felhasznalo.ID,
+                           felhasznalo.Email,
+                           felhasznalo.Felhasznalonev,
+                           felhasznalo.Keresztnev,
+                           felhasznalo.Vezeteknev,
+                           felhasznalo.Szerepkor,
+                           felhasznalo.Telefonszam,
+                           felhasznalo.ProfilkepUrl,
+                           felhasznalo.RegisztracioIdopontja,
+                           felhasznalo.UtolsoFrissites,
+                           SzuloID = szuloId,
+                           VedonoID = vedonoData?.ID,
+                           VedonoAdatok = vedonoData
+                       };
         return Ok(response);
     }
 
@@ -85,7 +85,6 @@ public class FelhasznaloController : ControllerBase
         existingUser.Email = updatedFelhasznalo.Email ?? existingUser.Email;
         existingUser.Telefonszam = updatedFelhasznalo.Telefonszam ?? existingUser.Telefonszam;
         existingUser.ProfilkepUrl = updatedFelhasznalo.ProfilkepUrl ?? existingUser.ProfilkepUrl;
-        existingUser.Szerepkor = updatedFelhasznalo.Szerepkor ?? existingUser.Szerepkor;
         existingUser.UtolsoFrissites = DateTime.UtcNow;
 
         if (existingUser.Szerepkor == "Vedono")

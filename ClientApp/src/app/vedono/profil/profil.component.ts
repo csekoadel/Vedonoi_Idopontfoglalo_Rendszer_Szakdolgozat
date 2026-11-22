@@ -24,6 +24,14 @@ export class ProfilComponent implements OnInit {
 
   roleKeys: string[] = Object.keys(this.roleMap);
 
+  // Az adatbázisban tárolt szerepkör -> a legördülőben megjelenő felirat
+  private szerepkorFelirat: { [key: string]: string } = {
+    Vedono: 'Védőnő',
+    Szulo: 'Szülő',
+    Adminisztrator: 'Adminisztrátor',
+    Vendeg: 'Vendég'
+  };
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
@@ -90,16 +98,15 @@ export class ProfilComponent implements OnInit {
       return;
     }
 
-
     this.userService.loadUserById(userId).subscribe({
       next: (userData) => {
         if (userData && userData.id) {
           this.userService.setUser(userData);
           this.updateFormWithUserData(userData);
-        } else {
         }
       },
       error: (err) => {
+        console.error('Hiba a felhasználói adatok betöltésekor:', err);
       }
     });
   }
@@ -109,13 +116,7 @@ export class ProfilComponent implements OnInit {
       return;
     }
 
-
-    let vedonoData = userData.vedonoAdatok;
-
-    if (!vedonoData) {
-      vedonoData = {bio: 'Nincs megadva', munkahely: 'Nincs megadva'};
-    }
-
+    const vedonoData = userData.vedonoAdatok || {bio: '', munkahely: ''};
 
     this.profileForm.patchValue({
       username: userData.felhasznalonev || '',
@@ -123,15 +124,13 @@ export class ProfilComponent implements OnInit {
       lastname: userData.keresztnev || '',
       email: userData.email || '',
       phone: userData.telefonszam || '',
-      role: Object.keys(this.roleMap).find(key => this.roleMap[key] === userData.szerepkor) || 'Vendég',
-      bio: vedonoData.bio,
-      munkahely: vedonoData.munkahely
+      role: this.szerepkorFelirat[userData.szerepkor] || 'Vendég',
+      bio: vedonoData.bio || '',
+      munkahely: vedonoData.munkahely || ''
     });
 
     this.uploadedImage = userData.profilkepUrl || 'assets/profil_kep_alap.jpg';
-
   }
-
 
   private loadUserFromFirebase(): void {
     this.authService.getUserLoggedIn().subscribe({
@@ -155,6 +154,7 @@ export class ProfilComponent implements OnInit {
     }
 
     const formData = this.profileForm.getRawValue();
+    // A szerepkört szándékosan nem küldjük: a profilból nem módosítható.
     const finalData: any = {
       felhasznaloID: currentUser.id,
       id: currentUser.id,
@@ -166,26 +166,21 @@ export class ProfilComponent implements OnInit {
       bio: formData.bio?.trim() || '',
       munkahely: formData.munkahely?.trim() || '',
       profilkepUrl: this.uploadedImage || '',
-      szerepkor: this.roleMap[formData.role] || Szerepkor.Vendeg,
       firebaseUid: currentUser.firebaseUid,
       vedonoID: currentUser.vedonoID || null
     };
 
-
-    if (finalData.szerepkor !== "Szülő") {
-      delete finalData.szuloId;
-    }
-
-
     this.isUpdating = true;
 
     this.userService.updateFelhasznalo(finalData).subscribe({
-      next: (updatedUser) => {
-        this.updateFormWithUserData(updatedUser);
+      next: () => {
+        // A mentés után friss adatokat töltünk be a backendből.
+        this.loadUserData(currentUser.id);
         this.disableSaveButton = true;
         this.isUpdating = false;
       },
       error: (error) => {
+        console.error('Hiba a mentés során:', error);
         this.isUpdating = false;
       }
     });
