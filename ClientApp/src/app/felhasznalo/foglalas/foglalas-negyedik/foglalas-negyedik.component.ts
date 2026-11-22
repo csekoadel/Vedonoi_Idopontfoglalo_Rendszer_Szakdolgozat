@@ -57,7 +57,7 @@ export class FoglalasNegyedikComponent implements OnInit {
         const szuloId = szuloIdParam ? +szuloIdParam : (currentUser?.szuloId ?? currentUser?.szuloID);
 
         if (currentUser && (currentUser.felhasznaloID || currentUser.id) && szuloId) {
-          this.userId = szuloId;
+          this.userId = currentUser.felhasznaloID || currentUser.id;
           console.log('Bejelentkezett szülő ID (szuloID):', this.userId);
         } else {
           console.error('Nincs bejelentkezett felhasználó vagy hiányzik az ID.', currentUser);

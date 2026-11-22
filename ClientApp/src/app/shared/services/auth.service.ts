@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, Injector} from '@angular/core';
 import {AngularFireAuth} from '@angular/fire/compat/auth';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {BehaviorSubject, from, map, Observable, of, tap, throwError} from 'rxjs';
@@ -18,18 +18,22 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   currentUser$: Observable<any> = this.currentUserSubject.asObservable();
 
-  constructor(
-    private auth: AngularFireAuth,
-    private http: HttpClient,
-    private userService: UserService
-  ) {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      this.currentUserSubject.next(parsedUser);
-      this.userLoggedInSubject.next(true);
+    constructor(
+      private auth: AngularFireAuth,
+      private http: HttpClient,
+      private injector: Injector
+    ) {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        this.currentUserSubject.next(parsedUser);
+        this.userLoggedInSubject.next(true);
+      }
     }
-  }
+
+    private get userService(): UserService {
+      return this.injector.get(UserService);
+    }
 
   getCurrentUserId(): number | null {
     try {
