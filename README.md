@@ -17,7 +17,7 @@ dotnet ef database update
 
 ```bash
 cd ClientApp
-npm ci
+npm install
 cd ..
 ```
 
